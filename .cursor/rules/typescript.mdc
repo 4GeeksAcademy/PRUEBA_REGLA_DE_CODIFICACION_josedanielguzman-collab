@@ -1,0 +1,53 @@
+---
+description: Reglas para TypeScript y Modelado de Datos
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# TypeScript y Modelado de Datos
+
+## Tipado Estricto
+- `strict: true` debe estar activo en `tsconfig.json`.
+- **Prohibido el uso de `any`**. Usa `unknown` con validación de tipos o interfaces explícitas.
+- Prefiere `interface` sobre `type` para objetos que puedan ser extendidos.
+
+## Modelado Orientado a Objetos
+- Encapsula propiedades internas usando modificadores de acceso (`private`, `protected`, `readonly`).
+- Define contratos claros con `interface` o `type` antes de implementar clases.
+
+## Nomenclatura
+| Elemento | Convención | Ejemplo |
+|----------|-----------|---------|
+| Clases, interfaces, tipos, componentes | `PascalCase` | `UserProfile`, `ButtonProps` |
+| Variables, funciones, métodos | `camelCase` | `getUserData`, `isLoading` |
+| Constantes globales | `UPPER_SNAKE_CASE` | `MAX_RETRY_COUNT`, `API_BASE_URL` |
+| Archivos de componentes | `PascalCase` | `Button.tsx`, `UserCard.tsx` |
+| Archivos de lógica/utilidades | `camelCase` | `useAuth.ts`, `formatDate.ts` |
+
+## Correcto ✅
+```typescript
+interface User {
+  readonly id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+}
+
+type UserRole = "admin" | "editor" | "viewer";
+
+function formatUserName(user: User): string {
+  return `${user.name} <${user.email}>`;
+}
+```
+
+## Incorrecto ❌
+```typescript
+// ❌ Uso de any
+function process(data: any) { ... }
+
+// ❌ strict mode desactivado
+// tsconfig.json: "strict": false
+
+// ❌ snake_case en TypeScript
+function get_user_data(id: string) { ... }
+```

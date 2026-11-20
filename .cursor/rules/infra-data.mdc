@@ -1,0 +1,93 @@
+---
+description: Reglas para Manejo de Errores, Pruebas, Telemetría, Data Pipelines, RAG y Docker
+globs: src/**/*.{ts,py}, tests/**/*.{ts,py}, pipelines/**/*.py, skills/**/*, Dockerfile, docker-compose.yml
+alwaysApply: false
+---
+
+# Manejo de Errores, Pruebas y Telemetría
+
+## Manejo Centralizado de Errores
+- Nunca silencies excepciones con bloques `catch {}` o `except: pass` vacíos.
+- Captura errores específicos, regístralos con contexto y devuelve respuestas estructuradas.
+- Usa middleware de errores en FastAPI o error boundaries en React.
+
+## Telemetría y Logs
+- Usa *logging* estructurado (JSON) en lugar de `print()` o `console.log()` en producción.
+- Incluye niveles adecuados: `DEBUG`, `INFO`, `WARNING`, `ERROR`.
+- Registra métricas clave: latencia, tasa de errores, uso de caché.
+
+### Correcto ✅
+```python
+import logging
+logger = logging.getLogger(__name__)
+logger.info("User created", extra={"user_id": user.id, "action": "create"})
+```
+
+```typescript
+import { createLogger } from "./logger";
+const logger = createLogger("auth");
+logger.warn("Login failed", { userId, reason: "invalid_password" });
+```
+
+### Incorrecto ❌
+```python
+try:
+    process(data)
+except:
+    pass  # ❌ Silencia errores
+```
+
+## Cobertura de Pruebas
+- Toda lógica de negocio crítica, endpoints de API y manejo de errores debe incluir pruebas.
+- Usa `pytest` en Python, `vitest`/`jest` en TypeScript.
+- Cubre casos exitosos, casos borde y casos de error.
+
+---
+
+# Data Pipelines, RAG, Agentes y Contenedores
+
+## Data Pipelines
+- Diseña procesos **idempotentes**: ejecutar el pipeline dos veces con los mismos datos no debe duplicar registros.
+- Separa claramente las etapas de extracción, transformación y carga (ETL).
+
+## RAG y Modelos
+- Desacopla la lógica de *chunking*, generación de *embeddings* y búsqueda vectorial de la interfaz de usuario.
+- Documenta los prompts del sistema en archivos dedicados (`prompts/`).
+
+## Skills y Agentes
+- Cada habilidad (*skill*) debe tener una responsabilidad única.
+- Entradas/salidas tipadas.
+- Manejo de fallos si una herramienta externa no responde (timeouts, retries).
+
+## Docker y Contenedores
+- Usa construcciones **multietapa** (*multi-stage builds*) en `Dockerfile` para mantener imágenes ligeras.
+- No ejecutes contenedores como usuario `root` en producción.
+- Orquesta servicios dependientes (API + DB + Redis) con `docker-compose.yml`.
+
+### Correcto ✅
+```dockerfile
+# Multi-stage build
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM node:18-alpine AS runner
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+USER node
+CMD ["node", "dist/index.js"]
+```
+
+### Incorrecto ❌
+```dockerfile
+# ❌ Sin multi-stage, corre como root
+FROM node:18
+WORKDIR /app
+COPY . .
+RUN npm install
+CMD ["npm", "start"]  # ❌ corre como root
+```

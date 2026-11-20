@@ -1,0 +1,70 @@
+---
+description: Reglas para Backend con Python, FastAPI y Bases de Datos
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Backend con Python, FastAPI y Bases de Datos
+
+## Estándar de Código
+- Sigue **PEP 8** (usa `black` o `ruff` para formateo automático).
+- **Type hints obligatorios** en todas las firmas de funciones y métodos:
+  ```python
+  def crear_usuario(data: UserCreate) -> UserResponse: ...
+  ```
+
+## FastAPI y Validación
+- Valida todas las entradas y salidas de endpoints usando modelos de **Pydantic** (`BaseModel`).
+- Nunca devuelvas diccionarios crudos sin esquema en rutas públicas.
+- Usa `response_model` en todos los endpoints.
+
+```python
+from pydantic import BaseModel
+
+class UserCreate(BaseModel):
+    name: str
+    email: str
+    password: str
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+
+@app.post("/users", response_model=UserResponse)
+def create_user(data: UserCreate) -> UserResponse:
+    ...
+```
+
+## Autenticación y Seguridad
+- Hashea contraseñas con algoritmos seguros (`bcrypt` o `argon2`), **nunca en texto plano**.
+- Protege rutas privadas con dependencias de verificación JWT.
+- Maneja códigos HTTP estándar: `201` (creado), `400` (bad request), `401` (no auth), `403` (forbidden), `404` (not found).
+
+## Bases de Datos Relacionales
+- Usa consultas parametrizadas o el ORM (SQLAlchemy / SQLModel) para prevenir inyección SQL.
+- Define claves primarias, foráneas y restricciones (`NOT NULL`, `UNIQUE`) explícitas en los esquemas.
+
+## Correcto ✅
+```python
+from sqlmodel import Field, SQLModel
+
+class User(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    email: str = Field(unique=True, nullable=False)
+    hashed_password: str = Field(nullable=False)
+    is_active: bool = Field(default=True)
+```
+
+## Incorrecto ❌
+```python
+# ❌ Sin type hints
+def get_user(user_id):
+    return db.query(...)
+
+# ❌ Contraseña en texto plano
+user.password = request.password
+
+# ❌ Consulta SQL sin parametrizar
+cursor.execute(f"SELECT * FROM users WHERE id = {user_id}")
+```

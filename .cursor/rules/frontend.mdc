@@ -1,0 +1,74 @@
+---
+description: Reglas para Frontend, UI y Tailwind CSS
+globs: src/**/*.{tsx,jsx,html,css}
+alwaysApply: false
+---
+
+# Frontend, UI y Tailwind CSS
+
+## Framework y Estilos
+- Usa **Tailwind CSS** para todos los estilos.
+- **Prohibido** escribir estilos `inline` (`style={{...}}`).
+- No uses archivos CSS separados salvo para configuración global (`globals.css`).
+
+## Accesibilidad y SEO (Web Fundamentals)
+- Usa HTML semántico: `<header>`, `<main>`, `<section>`, `<nav>`, `<article>`, `<footer>`.
+- Atributos `alt` descriptivos en todas las imágenes.
+- Etiquetas `<label>` vinculadas a cada `<input>` mediante `htmlFor`.
+- Jerarquía correcta de encabezados (`h1` único por página).
+
+## Arquitectura Next.js
+- Separa componentes de servidor (Server Components) de componentes interactivos.
+- Usa `"use client"` **solo** cuando se requieran hooks como `useState`, `useEffect` o eventos del navegador.
+- Por defecto, los componentes son Server Components.
+
+## Performance (Web Vitals)
+- Optimiza imágenes con `next/image` o carga diferida (`loading="lazy"`).
+- Evita re-renderizados innecesarios.
+- Minimiza el JavaScript del lado del cliente.
+
+## Correcto ✅
+```tsx
+// Server Component (default)
+export default function ProductList() {
+  return (
+    <section>
+      <h1>Productos</h1>
+      <div className="grid grid-cols-3 gap-4">
+        {products.map(p => (
+          <ProductCard key={p.id} product={p} />
+        ))}
+      </div>
+    </section>
+  );
+}
+```
+
+```tsx
+// Client Component (solo cuando es necesario)
+"use client";
+import { useState } from "react";
+
+export function Counter() {
+  const [count, setCount] = useState(0);
+  return (
+    <div className="flex gap-2 items-center">
+      <button onClick={() => setCount(c => c - 1)} className="btn">-</button>
+      <span className="text-lg font-bold">{count}</span>
+      <button onClick={() => setCount(c => c + 1)} className="btn">+</button>
+    </div>
+  );
+}
+```
+
+## Incorrecto ❌
+```tsx
+// ❌ Estilos inline prohibidos
+<div style={{ display: 'flex', padding: '16px' }}>...</div>
+
+// ❌ "use client" innecesario (no se usan hooks)
+"use client";
+export function StaticCard({ title }: { title: string }) {
+  return <div className="card">{title}</div>;
+}
+```
